@@ -1,0 +1,24 @@
+{
+  "name": "elasor",
+  "version": "0.0.1",
+  "description": "a private log analyser with nodejs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jetwaves/elasor.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jetwaves/elasor/issues"
+  },
+  "homepage": "https://github.com/jetwaves/elasor#readme",
+  "dependencies": {
+    "cli-table-redemption": "^1.0.1",
+    "commander": "^2.19.0",
+    "underscore": "^1.9.1"
+  }
+}
