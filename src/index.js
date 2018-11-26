@@ -1,3 +1,5 @@
+#! /usr/bin/node --harmony
+
 "use strict";
 const path = require('path');
 const os = require('os');
@@ -20,6 +22,11 @@ const Table = require('cli-table-redemption');
 const clog = console.log;
 const cdir = console.dir;
 
+let table = new Table({
+    head: ['Item', 'API', 'Elapsed time (ms)', 'Date'],
+    colWidths: [6, 70, 20, 24]
+});
+
 
 /**
  * 1. get filename from cmd arg
@@ -33,47 +40,52 @@ const currentVersion = '0.0.1';
 
 program
     .version(currentVersion)
-    // .usage('elasor LOG_FILE_NAME')
-    .description('  parse and analyse private format logs ')
-    .arguments('<filename> [filename]')
+    .usage('elasor LOG_FILE_NAME [-n] [--all] [--sort] [--max-time]')
+    .description('  parse and analyse private format(exec-time-YYYY-MM-DD.log) logs ')
     .option('-n [number_of_lines]', 'number of lines to analyse')
-    .option('--all ', 'analyse the whole file`s content ')
-    .option('--sort ', 'sort by field')
-    .option('--max-time ', 'max exec time to be filtered')
+    .option('--all', 'analyse the whole file`s content ')
+    .option('--sort', 'sort by field [ api/ elapsedTime ]')
+    .option('--max-time [maxTime]', 'max exec time to be filtered')
     .parse(process.argv);
-
 
 let param = {
     n : program.N,
     filename : program.args[0],
-    all : program.all
+    all : program.all,
+    maxTime : program.maxTime,
+    sort : program.sort
 };
-
-
-let max_time = '1200';
-let table = new Table({
-    head: ['API', 'Elapsed time', 'Date'],
-    colWidths: [80, 20, 24]
-});
 
 
 
 clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
 clog('┏---- INFO: ----- start [param @ ] -----');cdir(param);clog('┗---- INFO: -----  end  [param @ ] -----');
 
+let action = program.all?'cat':'tail';
+let maxTime = (program.maxTime || program.maxTime == 0)?program.maxTime:2000;
+
 let contentArr = new Array();
 let filterd = new Array();
 
 
+
 (async function(){
-    // let command = 'tail ' + param.filename + ' -n 100';
-    let command = 'tail exec-time-2018-04-18.log -n 10000';
+    let command = action + ' ' + param.filename;
+    if(!param.all && param.n){
+        command = command + ' -n ' + param.n;
+    }
+    // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
+    // clog('┏---- INFO: ----- start [command @ ] -----');cdir(command);clog('┗---- INFO: -----  end  [command @ ] -----');
     exec(command, function (error, stdout, stderr) {
-        if(error){
+        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
+        // clog('┏---- INFO: ----- start [error @ ] -----');cdir(error);clog('┗---- INFO: -----  end  [error @ ] -----');
+        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
+        // clog('┏---- INFO: ----- start [stderr @ ] -----');cdir(stderr);clog('┗---- INFO: -----  end  [stderr @ ] -----');
+        if(error != null){
             clog(chalk.bgRed('ERROR'));
             cdir(stderr);
         } else {
-            clog(chalk.bgGreen('Success'));
+            clog(chalk.bgGreen.black('Success'));
         }
         let lines = stdout.split(os.EOL);
         for(let idx in lines){
@@ -94,24 +106,50 @@ let filterd = new Array();
             contentArr.push(lineContent);
             // cdir(lineContent);
         }
-        contentArr = _.sortBy(contentArr, 'elapsedTime');
-        // cdir(contentArr);
-        for(let ydx in contentArr){
-            if(parseInt(contentArr[ydx].elapsedTime) > parseInt(max_time)){
-                filterd.push(contentArr[ydx]);
-                table.push([contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
-            }
+        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
+        // clog('┏---- INFO: ----- start [contentArr @ ] -----');cdir(contentArr);clog('┗---- INFO: -----  end  [contentArr @ ] -----');
+
+        let cnt = 0;
+
+        if(param.sort && param.sort != 'elapsedTime'){
+            contentArr = _.sortBy(contentArr, param.sort);
         }
+
+        if(param.maxTime){          //  如果参数    要求按时间筛选，则按时间筛选
+            contentArr = _.sortBy(contentArr, 'elapsedTime');
+            clog(' ==== filter by execution time ====  ' + maxTime + 'ms');
+            for(let ydx in contentArr){
+                if(parseInt(contentArr[ydx].elapsedTime) > parseInt(maxTime)){
+                    filterd.push(contentArr[ydx]);
+                    // table.push([cnt++, contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
+                    // if(cnt % 50 == 0 ) table.push(['', 'API', 'Elapsed time (ms)', 'Date']);
+                }
+            }
+            contentArr = filterd;
+        } else {                    //  如果参数    不要求按时间筛选，则返回时间最长的100条
+            contentArr = contentArr.splice(-100);
+            // for(let ydx in contentArr){
+            //     // filterd.push(contentArr[ydx]);
+            //     table.push([cnt++, contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
+            //     if(cnt % 50 == 0 ) table.push(['', 'API', 'Elapsed time (ms)', 'Date']);
+            // }
+        }
+        for(let ydx in contentArr){
+            table.push([cnt++, contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
+            if(cnt % 50 == 0 ) table.push(['', 'API', 'Elapsed time (ms)', 'Date']);
+        }
+
+        table.push(['', 'API', 'Elapsed time (ms)', 'Date'])
+
 
         // cdir(filterd);
         clog(table.toString());
 
+        clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
+        clog('┏---- INFO: ----- start [param @ ] -----');cdir(param);clog('┗---- INFO: -----  end  [param @ ] -----');
+        clog('Command :         ' + command);
 
 
-
-
-        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
-        // clog('┏---- INFO: ----- start [command @ ] -----');cdir(command);clog('┗---- INFO: -----  end  [command @ ] -----');
     });
 
 
