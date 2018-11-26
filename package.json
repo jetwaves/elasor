@@ -1,8 +1,8 @@
 {
-  "name": "elasor",
+  "name": "jetwaves/elasor",
   "version": "0.0.1",
   "description": "just a PRIVATE log analyser with nodejs",
-  "main": "index.js",
+  "main": "src/elasor.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
