@@ -22,6 +22,7 @@
   "dependencies": {
     "cli-table-redemption": "^1.0.1",
     "commander": "^2.19.0",
+    "moment": "^2.22.2",
     "underscore": "^1.9.1"
   }
 }
