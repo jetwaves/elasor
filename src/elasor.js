@@ -26,7 +26,7 @@ let table = new Table({         // table column titles
  *
  *
  * */
-const currentVersion = '0.0.1';
+const currentVersion = '0.0.2';
 
 program
     .version(currentVersion)
