@@ -1,28 +1,18 @@
 #! /usr/bin/node --harmony
 
 "use strict";
-const path = require('path');
 const os = require('os');
-const fs = require('fs');
-const async = require('async');
 const moment = require('moment');
-const Promise = require('promise');
 const _ = require('underscore');
-const mkdirp = require('mkdirp');
-const simpleGit = require('simple-git')();
 const chalk = require('chalk');
-
 const exec = require('child_process').exec;
-const execSync = require('child_process').execSync;
 const program   = require('commander');
 const Table = require('cli-table-redemption');
 
-
-//let config = require('./config.js');
 const clog = console.log;
 const cdir = console.dir;
 
-let table = new Table({
+let table = new Table({         // table column titles
     head: ['Item', 'API', 'Elapsed time (ms)', 'Date'],
     colWidths: [6, 70, 20, 24]
 });
@@ -56,10 +46,8 @@ let param = {
     sort : program.sort
 };
 
-
-
-clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
-clog('┏---- INFO: ----- start [param @ ] -----');cdir(param);clog('┗---- INFO: -----  end  [param @ ] -----');
+// clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
+// clog('┏---- INFO: ----- start [param @ ] -----');cdir(param);clog('┗---- INFO: -----  end  [param @ ] -----');
 
 let action = program.all?'cat':'tail';
 let maxTime = (program.maxTime || program.maxTime == 0)?program.maxTime:2000;
@@ -74,13 +62,7 @@ let filterd = new Array();
     if(!param.all && param.n){
         command = command + ' -n ' + param.n;
     }
-    // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
-    // clog('┏---- INFO: ----- start [command @ ] -----');cdir(command);clog('┗---- INFO: -----  end  [command @ ] -----');
     exec(command, function (error, stdout, stderr) {
-        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
-        // clog('┏---- INFO: ----- start [error @ ] -----');cdir(error);clog('┗---- INFO: -----  end  [error @ ] -----');
-        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
-        // clog('┏---- INFO: ----- start [stderr @ ] -----');cdir(stderr);clog('┗---- INFO: -----  end  [stderr @ ] -----');
         if(error != null){
             clog(chalk.bgRed('ERROR'));
             cdir(stderr);
@@ -91,9 +73,6 @@ let filterd = new Array();
         for(let idx in lines){
             let arr = lines[idx].split(' ')
             if(arr.length < 3) continue;
-            // clog(lines[idx]);
-            // cdir('line ' + idx + '  : ' + lines[idx]);
-            // cdir(arr);
             let apiArr = arr[3].split('@');
             let lineContent = {
                 lineNumber : idx,
@@ -104,10 +83,7 @@ let filterd = new Array();
                 elapsedTime: parseFloat(apiArr[1])
             };
             contentArr.push(lineContent);
-            // cdir(lineContent);
         }
-        // clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
-        // clog('┏---- INFO: ----- start [contentArr @ ] -----');cdir(contentArr);clog('┗---- INFO: -----  end  [contentArr @ ] -----');
 
         let cnt = 0;
 
@@ -121,18 +97,11 @@ let filterd = new Array();
             for(let ydx in contentArr){
                 if(parseInt(contentArr[ydx].elapsedTime) > parseInt(maxTime)){
                     filterd.push(contentArr[ydx]);
-                    // table.push([cnt++, contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
-                    // if(cnt % 50 == 0 ) table.push(['', 'API', 'Elapsed time (ms)', 'Date']);
                 }
             }
             contentArr = filterd;
         } else {                    //  如果参数    不要求按时间筛选，则返回时间最长的100条
             contentArr = contentArr.splice(-100);
-            // for(let ydx in contentArr){
-            //     // filterd.push(contentArr[ydx]);
-            //     table.push([cnt++, contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
-            //     if(cnt % 50 == 0 ) table.push(['', 'API', 'Elapsed time (ms)', 'Date']);
-            // }
         }
         for(let ydx in contentArr){
             table.push([cnt++, contentArr[ydx].api, contentArr[ydx].elapsedTime, contentArr[ydx].date + ' ' + contentArr[ydx].time]);
@@ -141,8 +110,6 @@ let filterd = new Array();
 
         table.push(['', 'API', 'Elapsed time (ms)', 'Date'])
 
-
-        // cdir(filterd);
         clog(table.toString());
 
         clog("\r\n"+moment().format('Y/MM/DD HH:mm:ss\t\t\t\t')+__filename);
@@ -151,13 +118,6 @@ let filterd = new Array();
 
 
     });
-
-
-
-
-
-
-
 
 })();
 
